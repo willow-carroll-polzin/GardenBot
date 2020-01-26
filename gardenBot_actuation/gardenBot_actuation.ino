@@ -3,35 +3,106 @@
 #include <math.h>
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
-#include "utility/Adafruit_PWMServoDriver.h"
+#include "utility/Adafruit_MS_PWMServoDriver.h"
 
 //*************************
-//Constants:
-//Mux control/signal pins
-int c0 = 2;
-int c1 = 3;
-int c2 = 4;
-int c3 = 5;
+//Irrigation control:
+int pump1 = 0; //Pump control pin
+int valve1 = 1; //Valve 1
+int valve2 = 2; //Valve 2
+int valve3 = 3; //Valve 3
+
+//Sensor flag:
+int flag = 0; //0=no watering needed, 1=watering needed
+int curSensor[9]; //Current sesnors being read/watered
+
+//Actuation control:
+Adafruit_MotorShield AFMS = Adafruit_MotorShield();  //Motor shield - Adafruit V2.0
+
+Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2); //Bi-stepper motor with 1.8 degree motor/360 has 200 steps, motor is connected to M3 & M4 (port 2)
 
 //*************************
 //Arduino setup:
-void setup(){
-  // Setup control on pins D2, D3, D4, D5 for MUX bit control
-  pinMode(c0, OUTPUT); 
+void setup() {
+  //Irrigation setup
+  pinMode(pump1, OUTPUT);
+  pinMode(valve1, OUTPUT);
+  pinMode(valve2, OUTPUT);
+  pinMode(valve3, OUTPUT);
 
-  pinMode(A1, OUTPUT);
-  digitalWrite(A1, LOW);
+  digitalWrite(pump1, LOW);
+  digitalWrite(valve1, LOW);
+  digitalWrite(valve2, LOW);
+  digitalWrite(valve3, LOW);
+  
+  //Setup motor paramters
+  myMotor->setSpeed(10);
 
-  //Start with write to low on all control pins
-  digitalWrite(c0, LOW);
+  //Initilize motor sheild
+  AFMS.begin();
 
+  //Initilize serial connection
   Serial.begin(9600); //Allow for monitoring on PC (COM3) at buad rate of 9600
+  Serial.println("BEGIN MOTION: ");
 }
 
 //*************************
 //Sensing and actuation loop:
 void loop() {
-    float curVal = analogRead(c0)*(5.0/1023.0);
-    Serial.println(curVal);
+    for (int i=0; i<9; i++) {
+      //TODO: Check moisture sensors (i.e. curSensor[i])
+      //float curVal = analogRead(c0)*(5.0/1023.0);
+      //Serial.println(curVal);
+      Serial.println("Checking moisture sensors...");
+
+      //IF CURSENSOR NEEDS WATER:
+      if (checkWater > 0) {
+        Serial.println("BEGIN:  WATERING!");
+        waterPlants(curSensor[i]); //Start watering routine, for current sensor
+      } else {
+        Serial.println("ERROR: FILL RESERVOIR!");
+        //TODO: Send error message to GUI, stop all functions and wait
+      }
+    }
+
+    flag = 1; //TEST
+    while (flag>0) {
+
+    }
+}
+//*************************
+//Read water level sensor
+int checkWater() {
+  //TODO: Add code to check water level
+  return (1); //Will return 1 if have enough water, else will return 0
+}
+
+//Watering routine
+void waterPlants(int curSensor) {
+        //Actuate motors
+        Serial.println("Moving to destination...");
+        //TODO: ADD METHOD TO DETERMINE WHICH SENSORS NEEDS WATER
+        myMotor->step(200,FORWARD, SINGLE);
+        myMotor->step(200,BACKWARD, SINGLE);
+        myMotor->release();
+        Serial.println("Destination reached.");
+    
+        //Open valves
+        Serial.println("Opening valves.");
+        digitalWrite(valve1, HIGH);
+        digitalWrite(valve2, HIGH);
+        digitalWrite(valve3, HIGH);
+    
+        //Pump water
+        Serial.println("Watering plants....");
+        digitalWrite(pump1, HIGH);
+        delay(100);
+        digitalWrite(pump1, LOW);
+        
+        //Close valves
+        Serial.println("Closing valves.");
+        digitalWrite(valve1, LOW);
+        digitalWrite(valve2, LOW);
+        digitalWrite(valve3, LOW);
 }
 //*************************
