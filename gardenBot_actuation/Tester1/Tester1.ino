@@ -59,7 +59,7 @@ void setup() {
 //*************************
 //Sensing and actuation loop:
 void loop() {
-    for (int i=0; i<9; i++) {
+    for (int i=0; i<3; i++) {
       //TODO: Check moisture sensors (i.e. curSensor[i])
       //float curVal = analogRead(c0)*(5.0/1023.0);
       //Serial.println(curVal);
