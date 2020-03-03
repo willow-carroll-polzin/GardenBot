@@ -13,11 +13,8 @@ int valve2 = 2; //Valve 2
 int valve3 = 3; //Valve 3
 
 //Sensor flag:
-int sensorToWater[9];; //List of sensors that will be watered
-//sensorToWater = new int[5];
+int flag = 0; //0=no watering needed, 1=watering needed
 int curSensor[9]; //Current sesnors being read/watered
-
-//Timing:
 
 //Actuation control:
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();  //Motor shield - Adafruit V2.0
@@ -52,33 +49,26 @@ void setup() {
 //*************************
 //Sensing and actuation loop:
 void loop() {
-  //Elapsed time
-  int curTime = 2;
-  //Check current time
-  if (curTime > 1) {
-      //Check moisture levels
-      for (int i=0; i<9; i++) {
-        Serial.println("Checking moisture sensors...");
-        //TODO: Check moisture sensors (i.e. curSensor[i])
-        //float curVal = analogRead(c0)*(5.0/1023.0);
-        //Serial.println(curVal);
-        
-        //TODO: assign sensors that need water
-        sensorToWater[i] = curSensor[i];
-      }
-  
-      //Check current water level
+    for (int i=0; i<9; i++) {
+      //TODO: Check moisture sensors (i.e. curSensor[i])
+      //float curVal = analogRead(c0)*(5.0/1023.0);
+      //Serial.println(curVal);
+      Serial.println("Checking moisture sensors...");
+
+      //IF CURSENSOR NEEDS WATER:
       if (checkWater > 0) {
         Serial.println("BEGIN:  WATERING!");
-        for (int j=0; j<9; j++) { //Water each sensor in the sesnor to water list
-          waterPlants(sensorToWater[j]); //Start watering routine
-        }
-      //If there is not enough water, report to user and stop all operations
+        waterPlants(curSensor[i]); //Start watering routine, for current sensor
       } else {
         Serial.println("ERROR: FILL RESERVOIR!");
         //TODO: Send error message to GUI, stop all functions and wait
       }
-  }
+    }
+
+    flag = 1; //TEST
+    while (flag>0) {
+
+    }
 }
 //*************************
 //Read water level sensor
@@ -92,9 +82,6 @@ void waterPlants(int curSensor) {
         //Actuate motors
         Serial.println("Moving to destination...");
         //TODO: ADD METHOD TO DETERMINE WHICH SENSORS NEEDS WATER
-
-        //M3_L = RED , M3_R = GREEN
-        //M4_L = YELLOW , M4_R = BLUE 
         myMotor->step(200,FORWARD, SINGLE);
         myMotor->step(200,BACKWARD, SINGLE);
         myMotor->release();

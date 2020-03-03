@@ -13,11 +13,8 @@ int valve2 = 2; //Valve 2
 int valve3 = 3; //Valve 3
 
 //Sensor flag:
-int sensorToWater[9];; //List of sensors that will be watered
-//sensorToWater = new int[5];
-int curSensor[9]; //Current sesnors being read/watered
-
-//Timing:
+int flag = 0; //0=no watering needed, 1=watering needed
+int curSensor[9] = {1,2,3,4,5,6,7,8,9}; //Current sesnors being read/watered
 
 //Actuation control:
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();  //Motor shield - Adafruit V2.0
@@ -52,33 +49,26 @@ void setup() {
 //*************************
 //Sensing and actuation loop:
 void loop() {
-  //Elapsed time
-  int curTime = 2;
-  //Check current time
-  if (curTime > 1) {
-      //Check moisture levels
-      for (int i=0; i<9; i++) {
-        Serial.println("Checking moisture sensors...");
-        //TODO: Check moisture sensors (i.e. curSensor[i])
-        //float curVal = analogRead(c0)*(5.0/1023.0);
-        //Serial.println(curVal);
-        
-        //TODO: assign sensors that need water
-        sensorToWater[i] = curSensor[i];
-      }
-  
-      //Check current water level
+    for (int i=0; i<9; i++) {
+      //TODO: Check moisture sensors (i.e. curSensor[i])
+      //float curVal = analogRead(c0)*(5.0/1023.0);
+      //Serial.println(curVal);
+      Serial.println("Checking moisture sensors...");
+
+      //IF CURSENSOR NEEDS WATER:
       if (checkWater > 0) {
         Serial.println("BEGIN:  WATERING!");
-        for (int j=0; j<9; j++) { //Water each sensor in the sesnor to water list
-          waterPlants(sensorToWater[j]); //Start watering routine
-        }
-      //If there is not enough water, report to user and stop all operations
+        waterPlants(curSensor[i]); //Start watering routine, for current sensor
       } else {
         Serial.println("ERROR: FILL RESERVOIR!");
         //TODO: Send error message to GUI, stop all functions and wait
       }
-  }
+    }
+
+    flag = 1; //TEST
+    while (flag>0) {
+
+    }
 }
 //*************************
 //Read water level sensor
@@ -91,31 +81,48 @@ int checkWater() {
 void waterPlants(int curSensor) {
         //Actuate motors
         Serial.println("Moving to destination...");
-        //TODO: ADD METHOD TO DETERMINE WHICH SENSORS NEEDS WATER
-
-        //M3_L = RED , M3_R = GREEN
-        //M4_L = YELLOW , M4_R = BLUE 
-        myMotor->step(200,FORWARD, SINGLE);
-        myMotor->step(200,BACKWARD, SINGLE);
-        myMotor->release();
+        if (curSensor == 1 || curSensor == 2 || curSensor == 3) {
+          myMotor->step(200,FORWARD, SINGLE); //Move to correct position
+          myMotor->step(200,BACKWARD, SINGLE); //Return to previous position
+          myMotor->release();
+        }
+        else if (curSensor == 4 || curSensor == 5 || curSensor == 6) {
+          myMotor->step(200,FORWARD, SINGLE); //Move to correct position
+          myMotor->step(200,BACKWARD, SINGLE); //Return to previous position
+          myMotor->release();
+        }
+        else if (curSensor == 7 || curSensor == 8 || curSensor == 9) {
+          myMotor->step(200,FORWARD, SINGLE); //Move to correct position
+          myMotor->step(200,BACKWARD, SINGLE); //Return to previous position
+          myMotor->release();
+        }
+        delay(100); //Wait for motor to reach destination
         Serial.println("Destination reached.");
     
         //Open valves
         Serial.println("Opening valves.");
-        digitalWrite(valve1, HIGH);
-        digitalWrite(valve2, HIGH);
-        digitalWrite(valve3, HIGH);
-    
+        if (curSensor == 1 || curSensor == 2 || curSensor == 3) {
+          digitalWrite(valve1, HIGH);
+        }
+        else if (curSensor == 4 || curSensor == 5 || curSensor == 6) {
+          digitalWrite(valve2, HIGH);
+        }
+        else if (curSensor == 7 || curSensor == 8 || curSensor == 9) {
+          digitalWrite(valve3, HIGH);
+        }
+        
         //Pump water
         Serial.println("Watering plants....");
         digitalWrite(pump1, HIGH);
-        delay(100);
+        delay(5000); //Water plants for 5 seconds
         digitalWrite(pump1, LOW);
+        Serial.println("Completed watering plants.");
         
         //Close valves
         Serial.println("Closing valves.");
         digitalWrite(valve1, LOW);
         digitalWrite(valve2, LOW);
         digitalWrite(valve3, LOW);
+        Serial.println("Vales closed.")
 }
 //*************************
