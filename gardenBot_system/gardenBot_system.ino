@@ -23,14 +23,15 @@ static const uint8_t MoisPins[3] = {A0,A1,A2};
 
 //Sensor flag:
 int curSensor[9] = {1,2,3,4,5,6,7,8,9}; //Current sesnors being read/watered
-int drySensors[9]; //List of sensors that require water
-
+int * drySensors; //List of sensors that require water
+int sens[3];
 //Actuation control:
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();  //Motor shield - Adafruit V2.0
 Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2); //Bi-stepper motor with 1.8 degree motor/360 has 200 steps, motor is connected to M3 & M4 (port 2)
+int position_delta = 0;
 
 //Output logger
-//output_logger = "
+//output_logger = 
 
 //*************************
 //Arduino setup:
@@ -56,42 +57,46 @@ void setup() {
 
   //Initilize serial connection
   Serial.begin(9600); //Allow for monitoring on PC (COM3) at buad rate of 9600
-  Serial.println("BEGIN MOTION: ");
+  //Serial.println("BEGIN MOTION: ");
 }
 
 //*************************
 //Sensing and actuation loop:
 void loop() {
-    
-      //Check water sensors
-      Serial.println("Checking moisture sensors...");
-      //int snes[6] = {1,2,3,4,5,6};
-      int snes[9];
-      Serial.println("AHHH");
-      Serial.println(sizeof(snes)/sizeof(snes[0]));
-      //snes = senseWater();
-      //drySensors = senseWater();
-      
+      char buffer[100];
       //Check if there is water available
-      if (waterLevelDetection() == 1) {
+      //int waterLevel = waterLevelDetection();
+      int waterLevel = 1; //TEST
+
+      //Check which sensors need water
+      drySensors=senseWater();
+      //Serial.println(drySensors[0]);
+      if (waterLevel = 1) {
         //Cycle through all sensors that may need water
         for (int i=0; i<sizeof(drySensors); i++) {
           //Check if the current sensor needs water
           if (drySensors[i] != 0) { 
-            //Serial.print("BEGIN WATERING: ");
+            //Serial.println("BEGIN WATERING: ");
             //Serial.println(curSensor[i]);
             waterPlants(curSensor[i]); //Start watering routine, for current sensor
+            sens[i]=drySensors[i];
             drySensors[i] = 0; //Reset the status of current sensor
           }
         }
-      } else if (waterLevelDetection() == 0) {
-        Serial.println("ERROR: FILL RESERVOIR!");
+      } else if (waterLevel == 0) {
+        //Serial.println("ERROR: FILL RESERVOIR!");
       }
+
+      //Output data
+      char dataSet = sprintf(buffer, "DATASTREAM: %d\t%d\t%d\t%d",waterLevel ,sens[0], sens[1], sens[2]);
+      Serial.println(buffer);
 }
 //*************************
-//Read water level sensors
-int senseWater() {
-  int sensors[9];
+//Read moisture sensors
+int * senseWater() {
+  char buffer[100];
+  int *sensors = new int[9];
+  
   for(int i = 0; i<9; i++) { 
     MoisAna[i] = analogRead(MoisPins[i]);
     MoisNum[i] = ((590-MoisAna[i])/300)*100;
@@ -128,8 +133,6 @@ int waterLevelDetection() {
   } else {
     digitalWrite(LED,LOW);
   }
-  
-  //delay(1000); //TODO: FIX
   return (1); //Will return 1 if have enough water, else will return 0
 }
 
@@ -141,41 +144,43 @@ void waterPlants(int curSensor) {
         //Serial.println("Moving to destination...");
         //TODO: GET CORRECT TUNING
         if (curSensor == 1 || curSensor == 2 || curSensor == 3) {
-          myMotor->step(200,FORWARD, SINGLE); //Move to correct position
-          myMotor->step(200,BACKWARD, SINGLE); //Return to previous position
-          myMotor->release();
+          position_delta = 200;
+          myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
         }
         else if (curSensor == 4 || curSensor == 5 || curSensor == 6) {
-          myMotor->step(200,FORWARD, SINGLE); //Move to correct position
-          myMotor->step(200,BACKWARD, SINGLE); //Return to previous position
-          myMotor->release();
+          position_delta = 400;
+          myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
         }
         else if (curSensor == 7 || curSensor == 8 || curSensor == 9) {
-          myMotor->step(200,FORWARD, SINGLE); //Move to correct position
-          myMotor->step(200,BACKWARD, SINGLE); //Return to previous position
-          myMotor->release();
+          position_delta = 600;
+          myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
         }
         //delay(100); //Wait for motor to reach destination //TODO: FIX
         //Serial.println("Destination reached.");
     
         //Open valves
         //Serial.println("Opening valves.");
-        if (curSensor == 1 || curSensor == 2 || curSensor == 3) {
+        if (curSensor == 1 || curSensor == 4 || curSensor == 7) {
           digitalWrite(valve1, HIGH);
         }
-        else if (curSensor == 4 || curSensor == 5 || curSensor == 6) {
+        else if (curSensor == 2 || curSensor == 5 || curSensor == 8) {
           digitalWrite(valve2, HIGH);
         }
-        else if (curSensor == 7 || curSensor == 8 || curSensor == 9) {
+        else if (curSensor == 3 || curSensor == 6 || curSensor == 9) {
           digitalWrite(valve3, HIGH);
         }
-        
+        //delay between moving gantry/opening valves, and turning the pump on
+        //delay(5000); //wait 5 seconds for everything to be done
         //Pump water
         //Serial.println("Watering plants....");
         digitalWrite(pump1, HIGH);
-        //delay(5000); //Water plants for 5 seconds //TODO: FIX
+          //delay(5000); //Water plants for 5 seconds
         digitalWrite(pump1, LOW);
         //Serial.println("Completed watering plants.");
+
+        //Move motors back to original position
+        myMotor->step(position_delta, BACKWARD, SINGLE);
+        myMotor->release();
         
         //Close valves
         //Serial.println("Closing valves.");
@@ -183,5 +188,6 @@ void waterPlants(int curSensor) {
         digitalWrite(valve2, LOW);
         digitalWrite(valve3, LOW);
         //Serial.println("Vales closed.");
+        //delay(5000); //make sure system is back to base config before return control to other parts of the program
 }
 //*************************
