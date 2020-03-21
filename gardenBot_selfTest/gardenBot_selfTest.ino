@@ -10,7 +10,6 @@
 #define pump 1                //Pump control pin
 #define valves 0              //Valve control (1,2,3)
 #define Water_Level_Sensor A3 //Water level sensor
-#define LED 8                 //Watering indicator LED
 
 //Watering sensor variables:
 double WaterAna;
@@ -69,6 +68,8 @@ void loop() {
 //*************************
 //Test Water level sensor:
 int waterTest() {
+  Serial.println("-------PERFORMING WATER LEVEL SENSOR TEST-------");
+  
   WaterAna=(long)analogRead(Water_Level_Sensor);
   WaterNum=(WaterAna/650)*4;
 
@@ -82,6 +83,8 @@ int waterTest() {
 
 //Test Moisutre sensors:
 int moistTest() {
+  Serial.println("-------PERFORMING MOISTURE SENSORS TEST-------");
+  
   char buffer[100];
   int *sensors = new int[9];
   
@@ -105,6 +108,8 @@ int moistTest() {
 
 //Test pump and valves:
 int pumpTest() {
+  Serial.println("-------PERFORMING PUMP AND VALVE TEST-------");
+  
   digitalWrite(valves, HIGH);
   Serial.println("VALVES OPEN, PUMPING!");
   digitalWrite(pump, HIGH);
@@ -116,6 +121,8 @@ int pumpTest() {
 
 //Test motors:
 int motorTest() {
+  Serial.println("-------PERFORMING MOTOR TEST-------");
+  
   position_delta = 500;
   myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
   myMotor->step(position_delta,BACKWARD, SINGLE); //Move to previous position
