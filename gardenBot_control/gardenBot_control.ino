@@ -20,7 +20,7 @@ double MoisNum[3];
 static const uint8_t MoisPins[3] = {A0,A1,A2};
 
 //Sensor flag:
-uint8_t curSensor[9] = {1,2,3,4,5,6,7,8,9}; //Current sesnors being read/watered
+uint8_t curSensor[3] = {1,2,3}; //Current sesnors being read/watered
 int * drySensors; //List of sensors that require water
 uint8_t sens[3];
 
@@ -88,9 +88,9 @@ void loop() {
 //Read moisture sensors
 int * senseWater() {
   char buffer[100];
-  int *sensors = new int[9];
+  int *sensors = new int[3];
   
-  for(int i = 0; i<9; i++) { 
+  for(int i = 0; i<3; i++) { 
     MoisAna[i] = analogRead(MoisPins[i]);
     MoisNum[i] = ((590-MoisAna[i])/300)*100;
     
@@ -101,7 +101,7 @@ int * senseWater() {
     //Serial.println("%");
 
     //TODO: SET CORRECT MOISTURE THRESHOLD
-    if (MoisNum[i] < 10) {
+    if (MoisNum[i] < 3) {
       sensors[i] = 1;
     } else {
       sensors[i] = 0;
