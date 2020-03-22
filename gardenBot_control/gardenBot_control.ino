@@ -111,6 +111,7 @@ int waterLevelDetection() {
     digitalWrite(LED,HIGH);
     return (0);
   } else {
+    
     digitalWrite(LED,LOW);
     return (1); //Will return 1 if have enough water, else will return 0
   }
