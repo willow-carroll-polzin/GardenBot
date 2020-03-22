@@ -7,19 +7,21 @@
 
 //*************************
 //Irrigation controls:
-#define pump 1                //Pump control pin
-#define valves 0              //Valve control (1,2,3)
+#define pump 0                //Pump control pin
+#define valves 1              //Valve control (1,2,3)
 #define Water_Level_Sensor A3 //Water level sensor
 
 //Watering sensor variables:
 double WaterAna;
 double WaterNum;
-double MoisAna[3];
-double MoisNum[3];
+int MoisAna[3];
+double MoisPer[3];
 static const uint8_t MoisPins[3] = {A0,A1,A2};
+static const int AIR_VAL = 630;
+static const int WATER_VAL = 300;
 
 //Sensor flag:
-uint8_t curSensor[9] = {1,2,3,4,5,6,7,8,9}; //Current sesnors being read/watered
+uint8_t curSensor[3] = {1,2,3}; //Current sesnors being read/watered
 int * drySensors; //List of sensors that require water
 uint8_t sens[3];
 
@@ -31,35 +33,35 @@ uint8_t position_delta = 0;
 //*************************
 //Arduino setup:
 void setup() {
+  //Initilize serial connection
+  Serial.begin(9600); //Allow for monitoring on PC (COM3) at buad rate of 9600
+  //Serial.println("BEGIN MOTION: ");
+  Serial.println("Setup starting");
   //Irrigation setup
   pinMode(pump, OUTPUT);
   pinMode(valves, OUTPUT);
-  pinMode(LED,OUTPUT);
 
   digitalWrite(pump, LOW);
   digitalWrite(valves, LOW);
   
   //Setup motor paramters
   myMotor->setSpeed(10);
-
+  Serial.println("Motor speed set");
   //Initilize motor sheild
-  AFMS.begin();
-
-  //Initilize serial connection
-  Serial.begin(9600); //Allow for monitoring on PC (COM3) at buad rate of 9600
-  //Serial.println("BEGIN MOTION: ");
+  AFMS.begin(); //WE ARE GETTING HUNG UP RIGHT HERE
+  Serial.println("Setup complete");
 }
 
 //Main fns:
 void loop() {
   //WATER LEVEL TEST:
-  waterTest();
+  //waterTest();
   
   //MOISTURE LEVEL TEST:
-  moistTest();
+  //moistTest();
   
-  //PUMP TEST:
-  pumpTest();
+  //PUMP & VALVES TEST:
+  //pumpTest();
   
   //MOTOR TEST:
   motorTest();
@@ -68,7 +70,7 @@ void loop() {
 //*************************
 //Test Water level sensor:
 int waterTest() {
-  Serial.println("-------PERFORMING WATER LEVEL SENSOR TEST-------");
+  //Serial.println("-------PERFORMING WATER LEVEL SENSOR TEST-------");
   
   WaterAna=(long)analogRead(Water_Level_Sensor);
   WaterNum=(WaterAna/650)*4;
@@ -83,32 +85,31 @@ int waterTest() {
 
 //Test Moisutre sensors:
 int moistTest() {
-  Serial.println("-------PERFORMING MOISTURE SENSORS TEST-------");
+  //Serial.println("-------PERFORMING MOISTURE SENSORS TEST-------");
   
   char buffer[100];
-  int *sensors = new int[9];
+  int *sensors = new int[3];
+  int sens[3]={0,0,0};
   
-  for(int i = 0; i<9; i++) { 
+  for(int i = 0; i<1; i++) { 
     MoisAna[i] = analogRead(MoisPins[i]);
-    MoisNum[i] = ((590-MoisAna[i])/300)*100;
-
-    if (MoisNum[i] < 10) {
-      sensors[i] = 1;
+    //Serial.println(MoisAna[i]);
+    MoisPer[i] = map(MoisAna[i], AIR_VAL, WATER_VAL,0,100);
+    //Serial.println(MoisPer[i]);
+    
+    if (MoisPer[i] < 50) {
+      sens[i] = 1;
     } else {
-      sensors[i] = 0;
+      sens[i] = 0;
     }
-
-    Serial.print("MOISTURE SENSOR: ");
-    Serial.println(sensors[i]);
-    if (sensors[i] == 1) {
-      Serial.println("^ IS TO LOW!");
-    }
+    Serial.println(sens[i]);
   }
+  //return sensors;
 }
 
 //Test pump and valves:
 int pumpTest() {
-  Serial.println("-------PERFORMING PUMP AND VALVE TEST-------");
+  //Serial.println("-------PERFORMING PUMP AND VALVE TEST-------");
   
   digitalWrite(valves, HIGH);
   Serial.println("VALVES OPEN, PUMPING!");
@@ -121,7 +122,7 @@ int pumpTest() {
 
 //Test motors:
 int motorTest() {
-  Serial.println("-------PERFORMING MOTOR TEST-------");
+  //Serial.println("-------PERFORMING MOTOR TEST-------");
   
   position_delta = 500;
   myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
