@@ -93,9 +93,9 @@ int * senseWater() {
     MoisPer[i] = map(MoisAna[i], AIR_VAL, WATER_VAL,0,100); //Convert analog value to relative percent (0-100)
     
     if (MoisPer[i] < 50) {
-      sensors[i] = 1;
+      sensors[i] = 1; //Need water
     } else {
-      sensors[i] = 0;
+      sensors[i] = 0; //Does not need water
     }
   }
   return sensors; //Will return list of sensors that require watering (value = 1)
@@ -124,28 +124,28 @@ void waterPlants(int curSensor) {
         //M4_L = YELLOW , M4_R = BLUE 
 
         //Actuate motors:
-        if (curSensor == 1 || curSensor == 2 || curSensor == 3) {
+        if (curSensor == 1) {
           position_delta = 200;
           myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position     <--------- //TODO: GET CORRECT TUNING
         }
-        else if (curSensor == 4 || curSensor == 5 || curSensor == 6) {
+        else if (curSensor == 3) {
           position_delta = 400;
           myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
         }
-        else if (curSensor == 7 || curSensor == 8 || curSensor == 9) {
+        else if (curSensor == 3) {
           position_delta = 600;
           myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
         }
         delay(5000); //Wait for motor to reach destination //TODO: FIX TIME TO CROSS
     
         //Open valves
-        if (curSensor == 1 || curSensor == 4 || curSensor == 7) {
+        if (curSensor == 1) {
           digitalWrite(valves, HIGH);
         }
-        else if (curSensor == 2 || curSensor == 5 || curSensor == 8) {
+        else if (curSensor == 2) {
           digitalWrite(valves, HIGH);
         }
-        else if (curSensor == 3 || curSensor == 6 || curSensor == 9) {
+        else if (curSensor == 3) {
           digitalWrite(valves, HIGH);
         }
         
@@ -154,11 +154,11 @@ void waterPlants(int curSensor) {
         delay(5000); //Water plants for 5 seconds
         digitalWrite(pump, LOW);
 
+        //Close valves
+        digitalWrite(valves, LOW);
+        
         //Move motors back to original position
         myMotor->step(position_delta, BACKWARD, SINGLE);
         myMotor->release();
-        
-        //Close valves
-        digitalWrite(valves, LOW);
 }
 //*************************
