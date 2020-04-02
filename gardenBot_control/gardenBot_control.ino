@@ -7,8 +7,8 @@
 
 //*************************
 //Irrigation controls:
-#define pump 1                //Pump control pin
-#define valves 0              //Valve control (1,2,3)
+#define pump 8                //Pump control pin
+#define valves 9              //Valve control (1,2,3)
 #define Water_Level_Sensor A3 //Water level sensor
 #define LED LED_BUILTIN       //Water level indicator
 
@@ -20,8 +20,8 @@ double WaterNum;
 double MoisAna[3];                              //Array of analog moisture values
 double MoisPer[3];                              //Array of percent moisture values
 static const uint8_t MoisPins[3] = {A0,A1,A2};  //Moisutre sensor pins
-static const int AIR_VAL = 630;                 //Mositure reading of the sensor in air @ room temp
-static const int WATER_VAL = 300;               //Moisture reading of the sensor submersed in tap water
+static const int AIR_VAL = 700;                 //Mositure reading of the sensor in air @ room temp
+static const int WATER_VAL = 400;               //Moisture reading of the sensor submersed in tap water
 
 //Sensor arrays:
 uint8_t curSensor[3] = {1,2,3}; //Current sesnors being read/watered
@@ -52,6 +52,7 @@ void setup() {
 
   //Initilize serial connection
   Serial.begin(9600); //Allow for monitoring on PC (COM3) at buad rate of 9600
+  Serial.println("Setup complete");
 }
 
 //*************************
@@ -60,7 +61,6 @@ void loop() {
       char buffer[100];
       //Check if there is water available:
       int waterLevel = waterLevelDetection();
-      waterLevel = 1; //TEST
 
       //Check which sensors need water:
       drySensors = senseWater();

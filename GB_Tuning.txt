@@ -1,0 +1,9 @@
+Moisture Levels:
+Dry soil = 1, (9,8,10%),(673,675,669)
+Watered soil =
+Moistish soil =(0,1,0), (63,25,55%), (511,625,535)
+Perfect soil = 
+
+Water Level:
+Full = 699.00-4.30 to 701.00-4.31
+1/4 (of sensor, so ~3/4 of res) = 381.00-2.34 to 382.00-2.35
