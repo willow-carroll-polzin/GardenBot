@@ -17,8 +17,6 @@ double WaterNum;
 int MoisAna[3];
 double MoisPer[3];
 static const uint8_t MoisPins[3] = {A0,A1,A2};
-//static const int AIR_VAL = 630;
-//static const int WATER_VAL = 300;
 static const int AIR_VAL = 700;
 static const int WATER_VAL = 400;
 
@@ -74,7 +72,7 @@ void loop() {
 //*************************
 //Test Water level sensor:
 void waterTest() {
-  //Serial.println("-------PERFORMING WATER LEVEL SENSOR TEST-------");
+  Serial.println("-------PERFORMING WATER LEVEL SENSOR TEST-------");
   
   WaterAna=(long)analogRead(Water_Level_Sensor);
   WaterNum=(WaterAna/650)*4;
@@ -93,7 +91,7 @@ void waterTest() {
 
 //Test Moisutre sensors:
 void moistTest() {
-  //Serial.println("-------PERFORMING MOISTURE SENSORS TEST-------");
+  Serial.println("-------PERFORMING MOISTURE SENSORS TEST-------");
   
   char buffer[100];
   int *sensors = new int[3];
@@ -101,9 +99,7 @@ void moistTest() {
   
   for(int i = 0; i<3; i++) { 
     MoisAna[i] = analogRead(MoisPins[i]);
-    //Serial.println(MoisAna[i]);
     MoisPer[i] = map(MoisAna[i], AIR_VAL, WATER_VAL,0,100);
-    //Serial.println(MoisPer[i]);
     
     if (MoisPer[i] < 50) {
       sens[i] = 1; //Needs water
@@ -121,11 +117,10 @@ void moistTest() {
 
 //Test pump and valves:
 void pumpTest() {
-  //Serial.println("-------PERFORMING PUMP AND VALVE TEST-------");
+  Serial.println("-------PERFORMING PUMP AND VALVE TEST-------");
   
   Serial.println("VALVES OPEN, PUMPING!");
   digitalWrite(valves, HIGH);
-  //delay(1000);
   digitalWrite(pump, HIGH);
   delay(5000);
   digitalWrite(pump, LOW);

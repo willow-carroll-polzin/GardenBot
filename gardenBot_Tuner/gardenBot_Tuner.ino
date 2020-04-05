@@ -9,9 +9,8 @@
 //Actuation controls:
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();       //Motor shield - Adafruit V2.0
 Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2); //Bi-stepper motor with 1.8 degree motor/360 has 200 steps, motor is connected to M3 & M4 (port 2)
-uint8_t position_delta = 0;                               //Current change in steps of motors
-int flag = 0;
-int check = 0;
+int position_delta = 0;                                   //Current change in steps of motors
+int check = 0;                                            //Check if test is complete
 
 //*************************
 //Arduino setup:
@@ -30,31 +29,38 @@ void setup() {
 //*************************
 //Tuning Loop:
 void loop() {
-  flag = 0;
   check = motorTune();
-  if (position_delta == 1000) {
-    flag = 1;
-    check = motorTune(flag);
-  }
 
   if (check == 1) {
     Serial.println("-------COMPLETED MOTOR TUNING-------");
+    while (1) {
+      Serial.println(".");
+    }
   }
 }
 
 //*************************
 //Tuning Function:
-void motorTune(int flag) {
-  position_delta += 1;
-  myMotor->step(position_delta,FORWARD, SINGLE); //Move to next position
+int motorTune() {
+  //Get positions:
+  Serial.println("TEST START");
+  position_delta += 1;     //Step through positions
+  //position_delta = 0;    //First sensor
+  //position_delta = 900;  //Second sensor
+  //position_delta = 1800; //Third sensor
+  
+  myMotor->step(position_delta,FORWARD, DOUBLE); //Move to next position
+  
   Serial.print("STEP: ");
   Serial.println(position_delta);
-
-  if (flag == 1) {
-    myMotor->step(position_delta,BACKWARD, SINGLE); //Move to start position
-    return 1;
-  }
+  
+  myMotor->step(position_delta,BACKWARD, DOUBLE);
   myMotor->release();
-  return 0;
+
+  if (position_delta >= 1800) {
+    return 1;
+  } else {
+   return 0;
+  }
 }
 //*************************

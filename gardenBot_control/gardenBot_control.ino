@@ -11,8 +11,9 @@
 #define valves 9              //Valve control (1,2,3)
 #define Water_Level_Sensor A3 //Water level sensor
 #define LED LED_BUILTIN       //Water level indicator
+#define PLANT_THRESH 45       //Soil moisture level threshold for plant
 
-//Watering sensor controls:
+//Watering sensor controls:/
 double WaterAna;
 double WaterNum;
 
@@ -31,7 +32,7 @@ uint8_t sens[3];                //Sensor array to return to user
 //Actuation controls:
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();       //Motor shield - Adafruit V2.0
 Adafruit_StepperMotor *myMotor = AFMS.getStepper(200, 2); //Bi-stepper motor with 1.8 degree motor/360 has 200 steps, motor is connected to M3 & M4 (port 2)
-uint8_t position_delta = 0;                               //Current change in steps of motors
+int position_delta = 0;                               //Current change in steps of motors
 
 //*************************
 //Arduino setup:
@@ -68,7 +69,7 @@ void loop() {
       //If there is enough water available:
       if (waterLevel == 1) {
         //Cycle through all sensors that may need water
-        for (int i=0; i<sizeof(drySensors); i++) {
+        for (int i=0; i<(sizeof(drySensors)+1); i++) {
           //Check if the current sensor needs water
           if (drySensors[i] == 1) { 
             waterPlants(curSensor[i]); //Start watering routine, for current sensor
@@ -77,6 +78,7 @@ void loop() {
           }
         }
       }
+      
       //Output data:
       char dataSet = sprintf(buffer, "DATASTREAM: %d\t%d\t%d\t%d",waterLevel ,sens[0], sens[1], sens[2]);
       Serial.println(buffer);
@@ -92,7 +94,7 @@ int * senseWater() {
     MoisAna[i] = analogRead(MoisPins[i]);
     MoisPer[i] = map(MoisAna[i], AIR_VAL, WATER_VAL,0,100); //Convert analog value to relative percent (0-100)
     
-    if (MoisPer[i] < 50) {
+    if (MoisPer[i] < PLANT_THRESH) {
       sensors[i] = 1; //Need water
     } else {
       sensors[i] = 0; //Does not need water
@@ -122,21 +124,24 @@ int waterLevelDetection() {
 void waterPlants(int curSensor) {
         //M3_L = RED , M3_R = GREEN
         //M4_L = YELLOW , M4_R = BLUE 
-
+        position_delta = 0;
+        
         //Actuate motors:
         if (curSensor == 1) {
-          position_delta = 200;
-          myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position     <--------- //TODO: GET CORRECT TUNING
+          position_delta = 0;
+          myMotor->step(position_delta,FORWARD, DOUBLE); //Move to correct position     <--------- //TODO: GET CORRECT TUNING
+          myMotor->release();        
+        }
+        else if (curSensor == 2) {
+          position_delta = 850;
+          myMotor->step(position_delta,FORWARD, DOUBLE); //Move to correct position
+          myMotor->release();
         }
         else if (curSensor == 3) {
-          position_delta = 400;
-          myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
+          position_delta = 1600;
+          myMotor->step(position_delta,FORWARD, DOUBLE); //Move to correct position
+          myMotor->release();
         }
-        else if (curSensor == 3) {
-          position_delta = 600;
-          myMotor->step(position_delta,FORWARD, SINGLE); //Move to correct position
-        }
-        delay(5000); //Wait for motor to reach destination //TODO: FIX TIME TO CROSS
     
         //Open valves
         if (curSensor == 1) {
@@ -148,17 +153,25 @@ void waterPlants(int curSensor) {
         else if (curSensor == 3) {
           digitalWrite(valves, HIGH);
         }
+
+        //Pump and continue to pump untill current dry sensor is not dry
+        int dry = 1;
+        int * sensors;    
+        sensors = senseWater();  
+        while (sensors[curSensor-1]==1) {
+            digitalWrite(pump, HIGH);
+            sensors = senseWater();
+        }
         
-        //Pump water
         digitalWrite(pump, HIGH);
-        delay(5000); //Water plants for 5 seconds
+        delay(7000); //Ensure sensor reading is stabalized
         digitalWrite(pump, LOW);
 
         //Close valves
         digitalWrite(valves, LOW);
         
         //Move motors back to original position
-        myMotor->step(position_delta, BACKWARD, SINGLE);
+        myMotor->step(position_delta, BACKWARD, DOUBLE);
         myMotor->release();
 }
 //*************************
