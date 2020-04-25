@@ -129,7 +129,7 @@ void waterPlants(int curSensor) {
         //Actuate motors:
         if (curSensor == 1) {
           position_delta = 0;
-          myMotor->step(position_delta,FORWARD, DOUBLE); //Move to correct position     <--------- //TODO: GET CORRECT TUNING
+          myMotor->step(position_delta,FORWARD, DOUBLE); //Move to correct position 
           myMotor->release();        
         }
         else if (curSensor == 2) {
